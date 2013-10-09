@@ -148,8 +148,8 @@ class nusoap_base {
 	* @var      string
 	* @access   public
 	*/
-    var $soap_defencoding = 'ISO-8859-1';
-	//var $soap_defencoding = 'UTF-8';
+    //var $soap_defencoding = 'ISO-8859-1';
+	var $soap_defencoding = 'UTF-8';
 
 	/**
 	* namespaces in an array of prefix => uri
@@ -160,7 +160,7 @@ class nusoap_base {
 	* @access   public
 	*/
 	var $namespaces = array(
-		'SOAP-ENV' => 'http://schemas.xmlsoap.org/soap/envelope/',
+		'soapenv' => 'http://schemas.xmlsoap.org/soap/envelope/',
 		'xsd' => 'http://www.w3.org/2001/XMLSchema',
 		'xsi' => 'http://www.w3.org/2001/XMLSchema-instance',
 		'SOAP-ENC' => 'http://schemas.xmlsoap.org/soap/encoding/'
@@ -172,7 +172,8 @@ class nusoap_base {
 	* @var      array
 	* @access   private
 	*/
-	var $usedNamespaces = array();
+	var $usedNamespaces = array("dot" => "http://schemas.datacontract.org/2004/07/Dot.Psp.Common",
+        "tem" => "http://tempuri.org/");
 
 	/**
 	* XML Schema types in an array of uri => (array of xml type => php type)
@@ -687,7 +688,7 @@ class nusoap_base {
 		$ns_string .= " xmlns:$k=\"$v\"";
 	}
 	if($encodingStyle) {
-		$ns_string = " SOAP-ENV:encodingStyle=\"$encodingStyle\"$ns_string";
+		$ns_string = " soapenv:encodingStyle=\"$encodingStyle\"$ns_string";
 	}
 
 	// serialize headers
@@ -704,17 +705,17 @@ class nusoap_base {
 			$headers = $xml;
 			$this->debug("In serializeEnvelope, serialized array of headers to $headers");
 		}
-		$headers = "<SOAP-ENV:Header>".$headers."</SOAP-ENV:Header>";
+		$headers = "<soapenv:Header>".$headers."</soapenv:Header>";
 	}
 	// serialize envelope
 	return
 	'<?xml version="1.0" encoding="'.$this->soap_defencoding .'"?'.">".
-	'<SOAP-ENV:Envelope'.$ns_string.">".
+	'<soapenv:Envelope'.$ns_string.">".
 	$headers.
-	"<SOAP-ENV:Body>".
+	"<soapenv:Body>".
 		$body.
-	"</SOAP-ENV:Body>".
-	"</SOAP-ENV:Envelope>";
+	"</soapenv:Body>".
+	"</soapenv:Envelope>";
     }
 
 	/**
@@ -1033,7 +1034,7 @@ class nusoap_fault extends nusoap_base {
 	/**
 	* constructor
     *
-    * @param string $faultcode (SOAP-ENV:Client | SOAP-ENV:Server)
+    * @param string $faultcode (soapenv:Client | soapenv:Server)
     * @param string $faultactor only used when msg routed between multiple actors
     * @param string $faultstring human readable error message
     * @param mixed $faultdetail detail, typically a string or array of string
@@ -1059,16 +1060,16 @@ class nusoap_fault extends nusoap_base {
 		}
 		$return_msg =
 			'<?xml version="1.0" encoding="'.$this->soap_defencoding.'"?>'.
-			'<SOAP-ENV:Envelope SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"'.$ns_string.">\n".
-				'<SOAP-ENV:Body>'.
-				'<SOAP-ENV:Fault>'.
+			'<soapenv:Envelope soapenv:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"'.$ns_string.">\n".
+				'<soapenv:Body>'.
+				'<soapenv:Fault>'.
 					$this->serialize_val($this->faultcode, 'faultcode').
 					$this->serialize_val($this->faultactor, 'faultactor').
 					$this->serialize_val($this->faultstring, 'faultstring').
 					$this->serialize_val($this->faultdetail, 'detail').
-				'</SOAP-ENV:Fault>'.
-				'</SOAP-ENV:Body>'.
-			'</SOAP-ENV:Envelope>';
+				'</soapenv:Fault>'.
+				'</soapenv:Body>'.
+			'</soapenv:Envelope>';
 		return $return_msg;
 	}
 }
@@ -3916,11 +3917,11 @@ class nusoap_server extends nusoap_base {
 					} elseif ($this->headers['content-encoding'] == 'gzip' && $degzdata = gzinflate(substr($data, 10))) {
 						$data = $degzdata;
 					} else {
-						$this->fault('SOAP-ENV:Client', 'Errors occurred when trying to decode the data');
+						$this->fault('soapenv:Client', 'Errors occurred when trying to decode the data');
 						return;
 					}
 				} else {
-					$this->fault('SOAP-ENV:Client', 'This Server does not support compressed data');
+					$this->fault('soapenv:Client', 'This Server does not support compressed data');
 					return;
 				}
 			}
@@ -3973,7 +3974,7 @@ class nusoap_server extends nusoap_base {
 				$this->methodname = $this->opData['name'];
 			} else {
 				$this->debug('in invoke_method, no WSDL for operation=' . $this->methodname);
-				$this->fault('SOAP-ENV:Client', "Operation '" . $this->methodname . "' is not defined in the WSDL for this service");
+				$this->fault('soapenv:Client', "Operation '" . $this->methodname . "' is not defined in the WSDL for this service");
 				return;
 			}
 		} else {
@@ -4014,7 +4015,7 @@ class nusoap_server extends nusoap_base {
 			if (!function_exists($this->methodname)) {
 				$this->debug("in invoke_method, function '$this->methodname' not found!");
 				$this->result = 'fault: method not found';
-				$this->fault('SOAP-ENV:Client',"method '$this->methodname'('$orig_methodname') not defined in service('$try_class' '$delim')");
+				$this->fault('soapenv:Client',"method '$this->methodname'('$orig_methodname') not defined in service('$try_class' '$delim')");
 				return;
 			}
 		} else {
@@ -4022,7 +4023,7 @@ class nusoap_server extends nusoap_base {
 			if (!in_array($method_to_compare, get_class_methods($class))) {
 				$this->debug("in invoke_method, method '$this->methodname' not found in class '$class'!");
 				$this->result = 'fault: method not found';
-				$this->fault('SOAP-ENV:Client',"method '$this->methodname'/'$method_to_compare'('$orig_methodname') not defined in service/'$class'('$try_class' '$delim')");
+				$this->fault('soapenv:Client',"method '$this->methodname'/'$method_to_compare'('$orig_methodname') not defined in service/'$class'('$try_class' '$delim')");
 				return;
 			}
 		}
@@ -4034,7 +4035,7 @@ class nusoap_server extends nusoap_base {
 			$this->debug('ERROR: request not verified against method signature');
 			$this->result = 'fault: request failed validation against method signature';
 			// return fault
-			$this->fault('SOAP-ENV:Client',"Operation '$this->methodname' not defined in service.");
+			$this->fault('soapenv:Client',"Operation '$this->methodname' not defined in service.");
 			return;
 		}
 
@@ -4061,7 +4062,7 @@ class nusoap_server extends nusoap_base {
 			if ($this->methodparams) {
 				foreach ($this->methodparams as $param) {
 					if (is_array($param) || is_object($param)) {
-						$this->fault('SOAP-ENV:Client', 'NuSOAP does not handle complexType parameters correctly when using eval; call_user_func_array must be available');
+						$this->fault('soapenv:Client', 'NuSOAP does not handle complexType parameters correctly when using eval; call_user_func_array must be available');
 						return;
 					}
 					$funcCall .= "\"$param\",";
@@ -4135,7 +4136,7 @@ class nusoap_server extends nusoap_base {
 			    $this->wsdl->clearDebug();
 				if($errstr = $this->wsdl->getError()){
 					$this->debug('got wsdl error: '.$errstr);
-					$this->fault('SOAP-ENV:Server', 'unable to serialize result');
+					$this->fault('soapenv:Server', 'unable to serialize result');
 					return;
 				}
 			} else {
@@ -4334,7 +4335,7 @@ class nusoap_server extends nusoap_base {
 		// if fault occurred during message parsing
 		if($err = $parser->getError()){
 			$this->result = 'fault: error in msg parsing: '.$err;
-			$this->fault('SOAP-ENV:Client',"error in msg parsing:\n".$err);
+			$this->fault('soapenv:Client',"error in msg parsing:\n".$err);
 		// else successfully parsed request into soapval object
 		} else {
 			// get/set methodname
@@ -5876,7 +5877,7 @@ class wsdl extends nusoap_base {
 		$this->debug("in serializeType: name=$name, type=$type, use=$use, encodingStyle=$encodingStyle, unqualified=" . ($unqualified ? "unqualified" : "qualified"));
 		$this->appendDebug("value=" . $this->varDump($value));
 		if($use == 'encoded' && $encodingStyle) {
-			$encodingStyle = ' SOAP-ENV:encodingStyle="' . $encodingStyle . '"';
+			$encodingStyle = ' soapenv:encodingStyle="' . $encodingStyle . '"';
 		}
 
 		// if a soapval has been supplied, let its type override the WSDL

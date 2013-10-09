@@ -40,7 +40,7 @@ class nusoap_fault extends nusoap_base {
 	/**
 	* constructor
     *
-    * @param string $faultcode (SOAP-ENV:Client | SOAP-ENV:Server)
+    * @param string $faultcode (soapenv:Client | soapenv:Server)
     * @param string $faultactor only used when msg routed between multiple actors
     * @param string $faultstring human readable error message
     * @param mixed $faultdetail detail, typically a string or array of string
@@ -66,16 +66,16 @@ class nusoap_fault extends nusoap_base {
 		}
 		$return_msg =
 			'<?xml version="1.0" encoding="'.$this->soap_defencoding.'"?>'.
-			'<SOAP-ENV:Envelope SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"'.$ns_string.">\n".
-				'<SOAP-ENV:Body>'.
-				'<SOAP-ENV:Fault>'.
+			'<soapenv:Envelope soapenv:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"'.$ns_string.">\n".
+				'<soapenv:Body>'.
+				'<soapenv:Fault>'.
 					$this->serialize_val($this->faultcode, 'faultcode').
 					$this->serialize_val($this->faultactor, 'faultactor').
 					$this->serialize_val($this->faultstring, 'faultstring').
 					$this->serialize_val($this->faultdetail, 'detail').
-				'</SOAP-ENV:Fault>'.
-				'</SOAP-ENV:Body>'.
-			'</SOAP-ENV:Envelope>';
+				'</soapenv:Fault>'.
+				'</soapenv:Body>'.
+			'</soapenv:Envelope>';
 		return $return_msg;
 	}
 }
