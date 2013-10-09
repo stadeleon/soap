@@ -13,7 +13,7 @@ $client = new nusoap_client("https://psp-stage.cdc.nicusa.com/Dot.Psp.Web.Servic
 $client->username = $username;
 $client->password = $password;
 
-//$client->soap_defencoding = 'utf-8';
+$client->soap_defencoding = 'utf-8';
 $err = $client->getError();
 if ($err) {
     echo '<h2>Constructor error</h2><pre>' . $err . '</pre>';
@@ -25,9 +25,9 @@ $headerStr = '
         <wsse:Security soapenv:mustUnderstand="1" xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">
           <wsse:UsernameToken wsu:Id="UsernameToken-4"
         xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
-             <wsse:Username>nscwss</wsse:Username>
+             <wsse:Username>' . $username. '</wsse:Username>
              <wsse:Password
-        Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText">Test4UspW!59</wsse:Password>
+        Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText">' . $password . '</wsse:Password>
              <wsse:Nonce
         EncodingType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary">cur2TD5NrfjhegS6DFQnnA==</wsse:Nonce>
              <wsu:Created>2011-01-11T21:32:14.692Z</wsu:Created>
@@ -35,12 +35,12 @@ $headerStr = '
           </wsse:Security>
             ';
 
-$str = <<<XML
+$str = '
        <tem:GetDriverData>
           <tem:request>
              <dot:DOTNumber>0</dot:DOTNumber>
-             <dot:UserName>nscwss</dot:UserName>
-             <dot:Password>Test4UspW!59</dot:Password>
+             <dot:UserName>' . $username. '</dot:UserName>
+             <dot:Password>' . $password . '</dot:Password>
              <dot:UserIPAddress xsi:nil="true"
                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>
              <dot:DriverFirstName>Franklin</dot:DriverFirstName>
@@ -60,7 +60,7 @@ $str = <<<XML
              </dot:DriverQueries>
           </tem:request>
        </tem:GetDriverData>
-XML;
+';
 
 $client->setHeaders($headerStr);
 $result = $client->call('GetDriverData', $str);
